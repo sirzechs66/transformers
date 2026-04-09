@@ -114,6 +114,12 @@ def pytest_addoption(parser):
     pytest_addoption_shared(parser)
 
 
+def pytest_runtest_logreport(report):
+    if report.when == "call":
+        outcome = "PASSED" if report.passed else "FAILED" if report.failed else "SKIPPED"
+        print(f"{report.nodeid} [{outcome}] {report.duration:.2f}s")
+
+
 def pytest_terminal_summary(terminalreporter):
     from transformers.testing_utils import pytest_terminal_summary_main
 
@@ -163,7 +169,7 @@ if is_torch_available():
         torch.backends.cudnn.allow_tf32 = False
 
     # This is necessary to make several `test_batching_equivalence` pass (within the tolerance `1e-5`)
-    if hasattr(torch.backends.cudnn.conv, "fp32_precision"):
+    if hasattr(torch.backends.cudnn, "conv") and hasattr(torch.backends.cudnn.conv, "fp32_precision"):
         torch.backends.cudnn.conv.fp32_precision = "ieee"
 
     # patch `torch.compile`: if `TORCH_COMPILE_FORCE_FULLGRAPH=1` (or values considered as true, e.g. yes, y, etc.),
